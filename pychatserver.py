@@ -1,38 +1,42 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3.6
 
 import threading
 import socket
 import ssl
 import argparse
 from colors import bcolors
-
+import time
 
 class SSLServer(threading.Thread):
-    def __init__(self, ip, port):
+    def __init__(self, conn, addr):
         threading.Thread.__init__(self)
-        self.ip = ip
-        self.port = port
-        print(bcolors.OKGREEN + "[+] New server socket thread started for " + ip + ":" + str(port) + bcolors.ENDC)
+        self.conn = conn
+        self.addr = addr
+        print(bcolors.OKGREEN + "[+] New connection from " + str(conn) + bcolors.ENDC)
 
     def run(self):
-        welcome = "Welcome!"
-        SSLServer.broadcast(self, welcome)
+        #welcome = "Welcome!"
+        #SSLServer.broadcast(self, welcome, conn)
         while True:
-            data = conn.recv(buffer_size).decode()
-            print(bcolors.OKBLUE + "RECIEVED FROM SOCKET: \n" + str(conn) + bcolors.ENDC)
-            SSLServer.broadcast(self, data)
+            data = self.conn.recv(buffer_size).decode()
+            if data:
+                SSLServer.broadcast(self, data, self.conn, self.addr)
+            else:
+                conn.close()
 
-    def broadcast(self, data):
+    def broadcast(self, data, conn, addr):
         print(bcolors.OKGREEN + "SOCKET LIST: \n"  + bcolors.ENDC)
-        for socket in socketList:
-            if socket != mySocket and sock:
-                try:
-                    print(bcolors.OKGREEN + str(socket) + bcolors.ENDC)
-                    socket.send(data.encode())
-                except:
-                    socket.close()
-                    if socket in socketList:
-                        socketList.remove(socket)
+        print(bcolors.OKGREEN + str(socketList) + bcolors.ENDC)
+        for i in range(0, len(socketList)):
+            if socketListPort[i] != addr[1]:
+                socketList[i].send(data.encode())
+                print("Message sent to: " + str(socketListPort[i]))
+                print(str(len(socketListPort)))
+            else:
+                print("failed to send to: " + str(socketListPort[i]))
+                print(str(len(socketListPort)))
+        print("\n")
+
 
 
 
@@ -47,16 +51,17 @@ ciphers='ECDH', do_handshake_on_connect=True)
 mySocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 mySocket.bind((ip,port))
 threads = []
+socketListPort = []
 socketList = []
 
 
 while True:
     mySocket.listen(4)
     conn, addr = mySocket.accept()
-    newThread = SSLServer(ip,port)
+    socketListPort.append(addr[1])
+    socketList.append(conn)
+    newThread = SSLServer(conn, addr)
     newThread.start()
     threads.append(newThread)
-    socketList.append(conn)
-    #print(socketList)
 for t in threads:
     t.join()

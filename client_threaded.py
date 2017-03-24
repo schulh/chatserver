@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3.6
 import socket
 import sys
 import argparse
@@ -37,35 +37,39 @@ class ChatClient():
         print(wrappedSocket)
         print(bcolors.ENDC)
         while True:
-            socket_list = [wrappedSocket]
-            # Get the list sockets which are readable
-            read_sockets, write_sockets, error_sockets = \
-            select.select(socket_list , [], [])
-            for socket in socket_list:
-                if socket == wrappedSocket:
-                    data = wrappedSocket.recv(buffer_size).decode()
-                    if not data:
-                        print("error")
-                        sys.exit()
-                    else:
-                        print(bcolors.HEADER + "<<< " + data + bcolors.ENDC)
-                else:
-                    message = input(">>> ")
-                    wrappedSocket.send(message.encode())
-
+            data = wrappedSocket.recv(buffer_size).decode()
+            print(bcolors.HEADER + "<<< " + data + bcolors.ENDC)
+            if not data:
+                print("disconnect")
+                sys.exit()
+    
+    def sendMsg(self):
+        while True:
+            message = input(">>> ")
+            wrappedSocket.send(message.encode())
+        
+threads = []
 
 try:
     buffer_size = 2048
     mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     wrappedSocket = ssl.wrap_socket(mySocket,ssl_version=ssl.PROTOCOL_TLSv1_2,\
     certfile='client.crt',keyfile='client.key', ciphers='ECDH')
-    wrappedSocket.settimeout(2)
+    wrappedSocket.settimeout(20)
     wrappedSocket.connect((host, port))
     client = ChatClient(wrappedSocket)
-    client.run()
+    threading.Thread(target = client.sendMsg()).start()
+    threading.Thread(target = client.run()).start()
+    #recv_thread = client.run()
+     #threads.append(send_thread)
+    #threads.append(recv_thread)
+    #client.run()
 except KeyboardInterrupt:
     print("Can't connect")
     sys.exit()
 #except KeyboardInterrupt:
 #    print("fuck you")
 #    sys.exit("exit")
+
+for t in threads:
+    t.join()
