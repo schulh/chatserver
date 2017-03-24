@@ -15,20 +15,24 @@ class SSLServer(threading.Thread):
         print(bcolors.OKGREEN + "[+] New connection from " + str(conn) + bcolors.ENDC)
 
     def run(self):
-        #welcome = "Welcome!"
+        data = "Client " + str(addr) + " connected"
+        SSLServer.broadcast(self, data, self.conn, self.addr)
         #SSLServer.broadcast(self, welcome, conn)
         while True:
             data = self.conn.recv(buffer_size).decode()
             if data:
                 SSLServer.broadcast(self, data, self.conn, self.addr)
             else:
-                conn.close()
-
+                if conn in socketList:
+                    socketList.remove(conn)
+                    data = "Client " + str(addr) + "disconnected"
+                    SSLServer.broadcast(self, data, self.conn, self.addr)
     def broadcast(self, data, conn, addr):
         print(bcolors.OKGREEN + "SOCKET LIST: \n"  + bcolors.ENDC)
         print(bcolors.OKGREEN + str(socketList) + bcolors.ENDC)
         for i in range(0, len(socketList)):
             if socketListPort[i] != addr[1]:
+                data = str(addr) + data
                 socketList[i].send(data.encode())
                 print("Message sent to: " + str(socketListPort[i]))
                 print(str(len(socketListPort)))
